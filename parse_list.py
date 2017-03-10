@@ -49,7 +49,7 @@ with codecs.open(args.input_fname, "r", "iso-8859-1") as f:
                 # or use named optional capture groups?
                 # \t+([\w \"]+)\ \(([0-9]+)\)[ ]+{[\w#\(.0-9\)]+}[ ]+\[([\w0-9 ]+)\]
                 m = re.search(
-                    "\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#]+)\ \((?P<year>[0-9?IVX/]+)\)[ ]*(?:{(?P<ep>[\w#\(.0-9\)]+)?})?[ ]*(?:\[(?P<char>[\w0-9 ]+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?", line)
+                    "\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}])\ \((?P<year>[0-9?IVX\/]+)\)[ ]*(?:{(?P<ep>[\w#\(.0-9\)]+)?})?[ ]*(?:\[(?P<char>[\w0-9 ]+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?", line)
                 if m:
                     role = Role(film_name=m.group(0), year=m.group(1),
                                 char_name=m.group(2), bill_pos=m.group(3))
