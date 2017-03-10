@@ -6,6 +6,15 @@ import re
 import sys
 from collections import namedtuple
 
+def re_match(s):
+    name_re = r"(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}]+)"
+    role_re = r"\t*" + name_re + \
+    r"\ \((?P<year>[0-9?IVX\/]+)\)[ ]*(?:{(?P<ep>[\w#\(.0-9\)-]+)?})?[ ]*(?:\([\w ]+\))?[ ]*(?:\[(?P<char>[\w0-9 ]+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?"
+    #print(role_re)
+    m = re.search(role_re, s)
+    name, year, ep, char, bill = m.group("name"), m.group("year"), m.group("ep"), m.group("char"), m.group("bill")
+    return Role(film_name=name, year=year, episode=ep, char_name=char, bill_pos=bill)
+
 parser = argparse.ArgumentParser(
     description='Convert imdb list text file to DB')
 parser.add_argument('--input-fname', type=str,
@@ -18,12 +27,11 @@ if args.input_fname == None or args.output_fname == None:
     parser.print_help()
     sys.exit(1)
 
-#Actor = namedtuple("Actor", ["films"])
-# Actors = [] # list of namedtuples
-Role = namedtuple("Role", ["film_name", "year", "char_name", "bill_pos"])
-
+Role = namedtuple("Role", ["film_name", "year", "episode", "char_name", "bill_pos"])
+roles = []
 num_matched = 0
 num_unmatched = 0
+
 
 with codecs.open(args.input_fname, "r", "iso-8859-1") as f:
     # only read a line into memory at a time
@@ -40,26 +48,26 @@ with codecs.open(args.input_fname, "r", "iso-8859-1") as f:
                 sys.exit(1)
         else:
             # print(line)
+            if line == "\n":
+                # finished actor
+                print("actor:", actor)
+                for role in roles:
+                    print(role)
+                print("")
+                roles = []
+                continue
             if not line.startswith("\t"):
                 # new actor
                 actor = line[:line.find("\t")]
+                role = re_match(line[line.rfind("\t"):])
+                roles.append(role)
+                # actor = line[:line.find("\t")]
                 # TODO: match first role of actor with regex
-                roles = []
             else:
                 # or use named optional capture groups?
                 # \t+([\w \"]+)\ \(([0-9]+)\)[ ]+{[\w#\(.0-9\)]+}[ ]+\[([\w0-9 ]+)\]
-                m = re.search(
-                    "\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}])\ \((?P<year>[0-9?IVX\/]+)\)[ ]*(?:{(?P<ep>[\w#\(.0-9\)]+)?})?[ ]*(?:\[(?P<char>[\w0-9 ]+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?", line)
-                if m:
-                    role = Role(film_name=m.group(0), year=m.group(1),
-                                char_name=m.group(2), bill_pos=m.group(3))
-                    num_matched += 1
-                    # print(role)
-                    #films = films.append(role)
-                else:
-                    num_unmatched += 1
-                    #print("did not match:")
-                    # print(line)
+                role = re_match(line)
+                roles.append(role)
 
 print("matched", num_matched)
 print("failed to match", num_unmatched)
