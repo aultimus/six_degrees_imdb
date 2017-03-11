@@ -8,7 +8,7 @@ import sys
 from collections import namedtuple
 
 def re_match(s):
-    role_re = r"\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}\&]+)\ \((?P<year>[0-9?IVX\/]+)\)[ ]*(?:{(?P<ep>.+)?})?[ ]*(?:\([\w ]+\))?[ ]*(?:\[(?P<char>.+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?"
+    role_re = r"\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}\&]+)\ \((?P<year>[0-9?IVX\/]+)\)[^{\[]+(?:{(?P<ep>.+)?})?[ ]*(?:\([\w ]+\))?[ ]*(?:\[(?P<char>.+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?"
     #print(role_re)
     m = re.search(role_re, s)
     name, year, ep, char, bill = m.group("name"), m.group("year"), m.group("ep"), m.group("char"), m.group("bill")
@@ -65,7 +65,7 @@ except Exception as e:
 # create a psycopg2 cursor that can execute queries
 cursor = conn.cursor()
 # create a new table with a single column called "name"
-cursor.execute("CREATE TABLE roles(actor text NOT NULL CHECK (actor <> ''), film text NOT NULL CHECK (film <> ''), year text, episode text, char_name text, bill_pos text, PRIMARY KEY(film, actor, episode, year, char_name));") # data is so odd primary key is pretty horrible
+cursor.execute("CREATE TABLE roles(actor text NOT NULL CHECK (actor <> ''), film text NOT NULL CHECK (film <> ''), year text, episode text, char_name text, bill_pos text, PRIMARY KEY(film, actor, episode, year, char_name, bill_pos));") # data is so odd primary key is pretty horrible
 cursor.execute("CREATE INDEX idx_actor ON roles(actor, film);")
 
 Role = namedtuple("Role", ["film_name", "year", "episode", "char_name", "bill_pos"])
