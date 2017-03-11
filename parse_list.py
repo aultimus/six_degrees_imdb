@@ -8,7 +8,7 @@ import sys
 from collections import namedtuple
 
 def re_match(s):
-    role_re = r"\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}\&]+)\ \((?P<year>[0-9?IVX\/]+)\)[ ]*(?:{(?P<ep>[\w#\(.0-9\)\-\ \']+)?})?[ ]*(?:\([\w ]+\))?[ ]*(?:\[(?P<char>[\w0-9 ]+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?"
+    role_re = r"\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}\&]+)\ \((?P<year>[0-9?IVX\/]+)\)[ ]*(?:{(?P<ep>.+)?})?[ ]*(?:\([\w ]+\))?[ ]*(?:\[(?P<char>.+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?"
     #print(role_re)
     m = re.search(role_re, s)
     name, year, ep, char, bill = m.group("name"), m.group("year"), m.group("ep"), m.group("char"), m.group("bill")
@@ -19,7 +19,7 @@ def escape_quote(s):
 
 def db_write(actor, role, cursor):
     s = "INSERT INTO roles(actor, film, year, episode, char_name, bill_pos) VALUES('%s', '%s', '%s', '%s', '%s', '%s')" % (escape_quote(actor), escape_quote(role.film_name), escape_quote(role.year or ""), escape_quote(role.episode or ""), escape_quote(role.char_name or ""), escape_quote(role.bill_pos or ""))
-    print(s)
+    #print(s)
     # TODO: role may have NONE fields rather than empty string
     cursor.execute(s)
 
@@ -65,7 +65,7 @@ except Exception as e:
 # create a psycopg2 cursor that can execute queries
 cursor = conn.cursor()
 # create a new table with a single column called "name"
-cursor.execute("CREATE TABLE roles(actor text NOT NULL CHECK (actor <> ''), film text NOT NULL CHECK (film <> ''), year text, episode text, char_name text, bill_pos text, PRIMARY KEY(film, actor, episode));")
+cursor.execute("CREATE TABLE roles(actor text NOT NULL CHECK (actor <> ''), film text NOT NULL CHECK (film <> ''), year text, episode text, char_name text, bill_pos text, PRIMARY KEY(film, actor, episode, year, char_name));") # data is so odd primary key is pretty horrible
 cursor.execute("CREATE INDEX idx_actor ON roles(actor, film);")
 
 Role = namedtuple("Role", ["film_name", "year", "episode", "char_name", "bill_pos"])
@@ -92,7 +92,7 @@ with codecs.open(args.input_fname, "r", "iso-8859-1") as f:
             if not line.startswith("\t"):
                 # new actor
                 actor = line[:line.find("\t")]
-                print(actor)
+                #print(actor)
                 role = re_match(line[line.rfind("\t"):])
                 db_write(actor, role, cursor)
             else:
