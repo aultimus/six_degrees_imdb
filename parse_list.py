@@ -8,18 +8,21 @@ import sys
 from collections import namedtuple
 
 def re_match(s):
-    role_re = r"\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}\&]+)\ \((?P<year>[0-9?IVX\/]+)\)[^{\[]+(?:{(?P<ep>.+)?})?[ ]*(?:\([\w ]+\))?[ ]*(?:\[(?P<char>.+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?"
+    role_re = r"\t*(?P<name>[\w \"\'?!.\(\)*$\[\]#°+-:.,@®\%«»<>~ôûî=¢\$\£;\{\}\&]+)\ \((?P<year>[0-9?IVX\/]+)\)[ ]*(?P<type>\(TV\)|\(VG\)|\(V\))?\ *(?P<voice>\(voice\))?[^{\[]*(?:{(?P<ep>.+)?})?[ ]*(?:\([\w ]+\))?[ ]*(?:\[(?P<char>.+)?\])?[ ]*(:?\<(?P<bill>[0-9]+)\>)?"
     #print(role_re)
+    #print(s)
     m = re.search(role_re, s)
     name, year, ep, char, bill = m.group("name"), m.group("year"), m.group("ep"), m.group("char"), m.group("bill")
-    return Role(film_name=name, year=year, episode=ep, char_name=char, bill_pos=bill)
+    return Role(film_name=name, year=year, episode=ep, char_name=char, bill_pos=bill, voice=m.group("voice"), typeof=m.group("type")
+)
 
 def escape_quote(s):
     return s.replace("'", "''")
 
 def db_write(actor, role, cursor):
-    s = "INSERT INTO roles(actor, film, year, episode, char_name, bill_pos) VALUES('%s', '%s', '%s', '%s', '%s', '%s')" % (escape_quote(actor), escape_quote(role.film_name), escape_quote(role.year or ""), escape_quote(role.episode or ""), escape_quote(role.char_name or ""), escape_quote(role.bill_pos or ""))
-    #print(s)
+    s = "INSERT INTO roles(actor, film, year, episode, char_name, bill_pos, typeof, voice) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (escape_quote(actor), escape_quote(role.film_name), escape_quote(role.year or ""), escape_quote(role.episode or ""), escape_quote(role.char_name or ""), escape_quote(role.bill_pos or ""), role.typeof or "", role.voice or "")
+    if role.bill_pos == "31":
+        print(s)
     # TODO: role may have NONE fields rather than empty string
     cursor.execute(s)
 
@@ -65,10 +68,10 @@ except Exception as e:
 # create a psycopg2 cursor that can execute queries
 cursor = conn.cursor()
 # create a new table with a single column called "name"
-cursor.execute("CREATE TABLE roles(actor text NOT NULL CHECK (actor <> ''), film text NOT NULL CHECK (film <> ''), year text, episode text, char_name text, bill_pos text, PRIMARY KEY(film, actor, episode, year, char_name, bill_pos));") # data is so odd primary key is pretty horrible
+cursor.execute("CREATE TABLE roles(actor text NOT NULL CHECK (actor <> ''), film text NOT NULL CHECK (film <> ''), year text, episode text, char_name text, bill_pos text, typeof text, voice text, PRIMARY KEY(film, actor, episode, year, char_name, bill_pos, typeof, voice));") # data is so odd primary key is pretty horrible
 cursor.execute("CREATE INDEX idx_actor ON roles(actor, film);")
 
-Role = namedtuple("Role", ["film_name", "year", "episode", "char_name", "bill_pos"])
+Role = namedtuple("Role", ["film_name", "year", "episode", "char_name", "bill_pos", "typeof", "voice"])
 num_matched = 0
 num_unmatched = 0
 
