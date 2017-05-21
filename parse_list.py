@@ -68,6 +68,7 @@ except Exception as e:
 # create a psycopg2 cursor that can execute queries
 cursor = conn.cursor()
 # create a new table with a single column called "name"
+# TODO: don't make primary key composite, make it an auto-incrementing integer
 cursor.execute("CREATE TABLE roles(actor text NOT NULL CHECK (actor <> ''), film text NOT NULL CHECK (film <> ''), year text, episode text, char_name text, bill_pos text, typeof text, voice text, PRIMARY KEY(film, actor, episode, year, char_name, bill_pos, typeof, voice));") # data is so odd primary key is pretty horrible
 cursor.execute("CREATE INDEX idx_actor ON roles(actor, film);")
 
