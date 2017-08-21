@@ -29,11 +29,10 @@ if args.do_get:
 
 		# extract archive if uncompressed data file does not exist
 		if not os.path.isfile(data_file_name):
-			with open(f_name):
-				with gzip.open(f_name, 'rb') as f_archive:
-					data = f_archive.read()
-					with open(data_file_name, 'wb') as f_data_file:
-						f_data_file.write(data)
+			with open(f_name), gzip.open(f_name, 'rb') as f_archive:
+				data = f_archive.read()
+				with open(data_file_name, 'wb') as f_data_file:
+					f_data_file.write(data)
 
 # do_get == false assumes unarchived data files exist
 
