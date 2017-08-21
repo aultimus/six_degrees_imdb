@@ -86,6 +86,8 @@ def db_title_basics(cursor, f_name):
 		for line in f:
 			if line_no != 0:
 				line = replace_null(line)
+				line = line.replace("'", "''")
+				line = line.replace('"', '""')
 				others, genres = line.rsplit("\t", 1)
 				genres = "{" + genres.rstrip("\n") + "}"
 				others = others.split("\t")
@@ -106,6 +108,41 @@ def db_title_basics(cursor, f_name):
 	rows = cursor.fetchall()
 	print(rows)
 
+# parsing data into arrays is probably uneccessary
+# TODO: refactor out some of the common tsv parsing code
+def db_name_basics(cursor, f_name):
+	cursor.execute("""CREATE TABLE "name_basics" (
+	nconst text primary key,
+	primaryName text,
+	birthYear int,
+	deathYear int,
+	primaryProfession text[],
+	knownForTitles text[]
+	);""")
+
+	with open(f_name) as f:
+		line_no = 0 # skip header
+		for line in f:
+			if line_no != 0:
+				line = replace_null(line)
+				line = line.replace("'", "''")
+				line = line.replace('"', '""')
+				others, titles = line.rsplit("\t", 1)
+				titles = "{" + titles.rstrip("\n") + "}"
+				others, profession = others.rsplit("\t", 1)
+				profession = "{" + profession + "}"
+				others = others.split("\t")
+				others = str(others).lstrip("[").rstrip("]").replace('"', "'")
+
+				s = """INSERT INTO "name_basics"(nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles) VALUES (%s,'%s', '%s');""" % (others, profession, titles)
+				#print(s)
+				cursor.execute(s)
+			if line_no%10000==0:
+				print(line_no)
+			line_no+=1
+	conn.commit()
+
+
 # first do:
 # create_db aulty
 try:
@@ -122,7 +159,7 @@ try:
 
 	db_title_principals(cursor, "title.principals" + test_str + ".tsv")
 	db_title_basics(cursor, "title.basics" + test_str + ".tsv")
-
+	db_name_basics(cursor, "name.basics" + test_str + ".tsv")
 
 except Exception as e:
 	print("Uh oh, can't connect. Invalid dbname, user or password?")
