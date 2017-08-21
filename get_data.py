@@ -88,12 +88,13 @@ def db_title_basics(cursor, f_name):
 				line = replace_null(line)
 				line = line.replace("'", "''")
 				line = line.replace('"', '""')
+				#print(line)
 				others, genres = line.rsplit("\t", 1)
 				genres = "{" + genres.rstrip("\n") + "}"
 				others = others.split("\t")
-				others = str(others).lstrip("[").rstrip("]")
-				print(genres)
-				print(others)
+				others = str(others).lstrip("[").rstrip("]").replace('"', "'")
+				#print(genres)
+				#print(others)
 				
 				s = """INSERT INTO "title_basics"(tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres) VALUES (%s,'%s');""" % (others, genres)
 				#print(s)
@@ -157,7 +158,7 @@ try:
 	if args.test_data:
 		test_str = ".test"
 
-	db_title_principals(cursor, "title.principals" + test_str + ".tsv")
+	#db_title_principals(cursor, "title.principals" + test_str + ".tsv")
 	db_title_basics(cursor, "title.basics" + test_str + ".tsv")
 	db_name_basics(cursor, "name.basics" + test_str + ".tsv")
 
