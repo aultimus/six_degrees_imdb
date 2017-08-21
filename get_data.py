@@ -49,7 +49,7 @@ def db_title_principals(cursor, f_name):
 	# TODO as list comprehension for efficiency?
 	# data = [line.rstrip("\n").split("\t") for line in f.readlines()]
 		line_no = 0 # skip header
-		for line in f.readlines():
+		for line in f:
 			if line_no != 0:
 				tconst, nconsts = line.rstrip("\n").split("\t")
 				s = """INSERT INTO "title_principals"(tconst, principalcast) VALUES ('%s', '{%s}');""" % (tconst, nconsts)
@@ -80,7 +80,7 @@ def db_title_basics(cursor, f_name):
 
 	with open(f_name) as f:
 		line_no = 0 # skip header
-		for line in f.readlines():
+		for line in f:
 			if line_no != 0:
 				line = replace_null(line)
 				others, genres = line.rsplit("\t", 1)
