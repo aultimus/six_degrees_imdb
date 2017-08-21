@@ -41,8 +41,9 @@ def replace_null(s):
 
 def db_title_principals(cursor, f_name):
 	cursor.execute("""CREATE TABLE "title_principals" (
-	tconst          text primary key,
-	principalcast   text[]
+	tconst text,
+	nconst text,
+	PRIMARY KEY(tconst, nconst)
 	);""")
 
 	with open(f_name) as f:
@@ -52,9 +53,11 @@ def db_title_principals(cursor, f_name):
 		for line in f:
 			if line_no != 0:
 				tconst, nconsts = line.rstrip("\n").split("\t")
-				s = """INSERT INTO "title_principals"(tconst, principalcast) VALUES ('%s', '{%s}');""" % (tconst, nconsts)
-				cursor.execute(s)
-				#print(s)
+				nconsts = nconsts.split(",")
+				for nconst in nconsts:
+					s = """INSERT INTO "title_principals"(tconst, nconst) VALUES ('%s', '%s');""" % (tconst, nconst)
+					cursor.execute(s)
+					#print(s)
 			if line_no%10000==0:
 				print(line_no)
 			line_no+=1
@@ -117,7 +120,7 @@ try:
 	if args.test_data:
 		test_str = ".test"
 
-	#db_title_principals(cursor, "title.principals" + test_str + ".tsv")
+	db_title_principals(cursor, "title.principals" + test_str + ".tsv")
 	db_title_basics(cursor, "title.basics" + test_str + ".tsv")
 
 
