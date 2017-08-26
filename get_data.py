@@ -39,6 +39,17 @@ if args.do_get:
 def replace_null(s):
 	return s.replace(r"\N", "0")
 
+def gen_insert_string(table_name, col_names, data_str):
+	d = replace_null(data_str)
+	d = d.replace("'", "''")
+	d = d.replace('"', '""')
+	l = d.rstrip("\n").split("\t")
+	d = str(l).lstrip("[").rstrip("]").replace('"', "'")
+
+	s = """INSERT INTO "%s"(%s) VALUES (%s)""" % (table_name, col_names, d)
+	print(s)
+	return s
+
 def db_title_principals(cursor, f_name):
 	cursor.execute("""CREATE TABLE "title_principals" (
 	tconst text,
@@ -52,10 +63,7 @@ def db_title_principals(cursor, f_name):
 		line_no = 0 # skip header
 		for line in f:
 			if line_no != 0:
-				tconst, nconsts = line.rstrip("\n").split("\t")
-				nconsts = nconsts.split(",")
-				for nconst in nconsts:
-					s = """INSERT INTO "title_principals"(tconst, nconst) VALUES ('%s', '%s');""" % (tconst, nconst)
+					s = gen_insert_string("title_principals", "tconst, nconst", line)
 					cursor.execute(s)
 					#print(s)
 			if line_no%10000==0:
@@ -78,25 +86,14 @@ def db_title_basics(cursor, f_name):
 	startYear			int,
 	endYear				int,
 	runtimeMinutes		int,
-	genres				text[]
+	genres				text
 	);""")
 
 	with open(f_name) as f:
 		line_no = 0 # skip header
 		for line in f:
 			if line_no != 0:
-				line = replace_null(line)
-				line = line.replace("'", "''")
-				line = line.replace('"', '""')
-				#print(line)
-				others, genres = line.rsplit("\t", 1)
-				genres = "{" + genres.rstrip("\n") + "}"
-				others = others.split("\t")
-				others = str(others).lstrip("[").rstrip("]").replace('"', "'")
-				#print(genres)
-				#print(others)
-				
-				s = """INSERT INTO "title_basics"(tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres) VALUES (%s,'%s');""" % (others, genres)
+				s = gen_insert_string("title_basics", "tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres", line)
 				#print(s)
 				cursor.execute(s)
 			if line_no%10000==0:
@@ -117,25 +114,15 @@ def db_name_basics(cursor, f_name):
 	primaryName text,
 	birthYear int,
 	deathYear int,
-	primaryProfession text[],
-	knownForTitles text[]
+	primaryProfession text,
+	knownForTitles text
 	);""")
 
 	with open(f_name) as f:
 		line_no = 0 # skip header
 		for line in f:
 			if line_no != 0:
-				line = replace_null(line)
-				line = line.replace("'", "''")
-				line = line.replace('"', '""')
-				others, titles = line.rsplit("\t", 1)
-				titles = "{" + titles.rstrip("\n") + "}"
-				others, profession = others.rsplit("\t", 1)
-				profession = "{" + profession + "}"
-				others = others.split("\t")
-				others = str(others).lstrip("[").rstrip("]").replace('"', "'")
-
-				s = """INSERT INTO "name_basics"(nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles) VALUES (%s,'%s', '%s');""" % (others, profession, titles)
+				s = gen_insert_string("name_basics", "nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles", line)
 				#print(s)
 				cursor.execute(s)
 			if line_no%10000==0:
