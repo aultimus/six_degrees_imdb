@@ -44,10 +44,15 @@ def gen_insert_string(table_name, col_names, data_str):
 	d = d.replace("'", "''")
 	d = d.replace('"', '""')
 	l = d.rstrip("\n").split("\t")
+	num_data = len(l)
 	d = str(l).lstrip("[").rstrip("]").replace('"', "'")
+	d = d.replace("\\'", "")
 
+	num_cols = len(col_names.split(","))
+	if num_cols != num_data:
+		raise ValueError("bad data does not have correct number of cols. Wants %d, has %d, %s" % (num_cols, num_data, data_str))
 	s = """INSERT INTO "%s"(%s) VALUES (%s)""" % (table_name, col_names, d)
-	print(s)
+	#print(s)
 	return s
 
 def db_title_principals(cursor, f_name):
@@ -63,9 +68,14 @@ def db_title_principals(cursor, f_name):
 		line_no = 0 # skip header
 		for line in f:
 			if line_no != 0:
-					s = gen_insert_string("title_principals", "tconst, nconst", line)
-					cursor.execute(s)
-					#print(s)
+					try:
+						s = gen_insert_string("title_principals", "tconst, nconst", line)
+						cursor.execute(s)
+						#print(s)
+					except ValueError as e:
+						print(e)
+						traceback.print_exc()
+						continue
 			if line_no%10000==0:
 				print(line_no)
 			line_no+=1
@@ -93,9 +103,14 @@ def db_title_basics(cursor, f_name):
 		line_no = 0 # skip header
 		for line in f:
 			if line_no != 0:
-				s = gen_insert_string("title_basics", "tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres", line)
-				#print(s)
-				cursor.execute(s)
+				try:
+					s = gen_insert_string("title_basics", "tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres", line)
+					#print(s)
+					cursor.execute(s)
+				except ValueError as e:
+					print(e)
+					traceback.print_exc()
+					continue
 			if line_no%10000==0:
 				print(line_no)
 			line_no+=1
@@ -122,9 +137,14 @@ def db_name_basics(cursor, f_name):
 		line_no = 0 # skip header
 		for line in f:
 			if line_no != 0:
-				s = gen_insert_string("name_basics", "nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles", line)
-				#print(s)
-				cursor.execute(s)
+				try:
+					s = gen_insert_string("name_basics", "nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles", line)
+					#print(s)
+					cursor.execute(s)
+				except ValueError as e:
+					print(e)
+					traceback.print_exc()
+					continue
 			if line_no%10000==0:
 				print(line_no)
 			line_no+=1
@@ -145,7 +165,7 @@ try:
 	if args.test_data:
 		test_str = ".test"
 
-	#db_title_principals(cursor, "title.principals" + test_str + ".tsv")
+	db_title_principals(cursor, "title.principals" + test_str + ".tsv")
 	db_title_basics(cursor, "title.basics" + test_str + ".tsv")
 	db_name_basics(cursor, "name.basics" + test_str + ".tsv")
 
