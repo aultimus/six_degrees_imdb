@@ -12,6 +12,8 @@ import traceback
 parser = argparse.ArgumentParser(description='IMDB data updater script')
 parser.add_argument('--do-get', dest='do_get', action='store_true')
 parser.add_argument('--test-data', dest='test_data', action='store_true')
+parser.add_argument('--drop-tables', dest='drop_tables', action='store_true')
+
 args = parser.parse_args()
 
 if args.do_get:
@@ -160,6 +162,15 @@ try:
 	# create a psycopg2 cursor that can execute queries
 	cursor = conn.cursor()
 	# create a new table with a single column called "name"
+
+	if args.drop_tables:
+		print("dropping existing database tables")
+		prefix = "DROP TABLE "
+		suffix = ";"
+		# TODO: stop duplicating these strings
+		cmds =  [prefix+"name_basics"+suffix, prefix+"title_basics"+suffix, prefix+"title_principals"+suffix]
+		for cmd in cmds:
+			cursor.execute(cmd)
 
 	test_str = ""
 	if args.test_data:
