@@ -58,6 +58,8 @@ def gen_insert_string(table_name, col_names, data_str):
 	return s
 
 def db_title_principals(cursor, f_name):
+	print("beginning title_principals db update")
+
 	cursor.execute("""CREATE TABLE "title_principals" (
 	tconst text,
 	nconst text,
@@ -87,8 +89,11 @@ def db_title_principals(cursor, f_name):
 	cursor.execute("""SELECT * FROM title_principals WHERE tconst = 'tt0000001';""")
 	rows = cursor.fetchall()
 	print(rows)
+	print("completed title_principals db update")
 
 def db_title_basics(cursor, f_name):
+	print("beginning title_basics db update")
+
 	cursor.execute("""CREATE TABLE "title_basics" (
 	tconst				text primary key,
 	titleType			text,
@@ -122,10 +127,13 @@ def db_title_basics(cursor, f_name):
 	cursor.execute("""SELECT * FROM title_basics WHERE tconst = 'tt0000009';""")
 	rows = cursor.fetchall()
 	print(rows)
+	print("completed title_basics db update")
 
 # parsing data into arrays is probably uneccessary
 # TODO: refactor out some of the common tsv parsing code
 def db_name_basics(cursor, f_name):
+	print("beginning name_basics db update")
+
 	cursor.execute("""CREATE TABLE "name_basics" (
 	nconst text primary key,
 	primaryName text,
@@ -151,6 +159,7 @@ def db_name_basics(cursor, f_name):
 				print(line_no)
 			line_no+=1
 	conn.commit()
+	print("completed name_basics db update")
 
 
 # first do:
