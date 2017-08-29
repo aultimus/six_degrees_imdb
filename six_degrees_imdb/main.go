@@ -1,9 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"database/sql"
+	"log"
 
-// psql
+	_ "github.com/lib/pq"
+)
 
 func main() {
-	fmt.Println("hello world")
+	db, err := sql.Open("postgres", "user=aulty dbname=aulty sslmode=verify-full")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rows, err := db.Query("SELECT * FROM title_principals WHERE age = $1", age)
+
 }
