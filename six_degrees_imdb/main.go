@@ -8,11 +8,16 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("postgres", "user=aulty dbname=aulty sslmode=verify-full")
+	// by default go sql client seems to try to connect over tcp prompting a password
+	// so we need to use this brittle string
+	db, err := sql.Open("postgres", "postgresql:///aulty?host=/var/run/postgresql")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	rows, err := db.Query("SELECT * FROM title_principals WHERE age = $1", age)
+	// confirm connection to db succeeded
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
