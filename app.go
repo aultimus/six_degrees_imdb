@@ -2,6 +2,7 @@ package sixdegreesimdb
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,14 +63,53 @@ func (a *App) Run() error {
 	return a.server.ListenAndServe()
 }
 
-// TODO: batching sql ops?
-func nconstsForName(db *sql.DB, name string) (*sql.Rows, error) {
-	rows, err := db.Query("SELECT * FROM name_basics WHERE primaryname = $1", name)
-	return rows, err
+type NCONST struct {
+	ID  string
+	URL string
 }
 
-// PathBetweenHandler for the given two actors attempts to find the shortest
-// path between them in terms of actors they have worked with
+type NCONSTResp struct {
+	IDs       []NCONST
+	Ambiguous bool
+}
+
+type NameResponse struct {
+	NCONSTa NCONSTResp
+	NCONSTB NCONSTResp
+}
+
+// TODO: should really use an ORM for this
+// TODO: Handle case insensitivity?
+
+// TODO: batching sql ops?
+func nconstsForName(db *sql.DB, name string) (NCONSTResp, error) {
+	rows, err := db.Query("SELECT nconst FROM name_basics WHERE primaryname = $1", name)
+	defer rows.Close()
+	//spew.Dump(rows)
+	nconst := NCONSTResp{IDs: make([]NCONST, 0, 0)}
+	for rows.Next() {
+		var n string
+		err = rows.Scan(&n)
+		if err != nil {
+			return nconst, err
+		}
+
+		// TODO: format url
+		nconst.IDs = append(nconst.IDs, NCONST{n, ""})
+	}
+	if len(nconst.IDs) > 1 {
+		nconst.Ambiguous = true
+	}
+	return nconst, err
+}
+
+// Example usage:
+// $ curl localhost:8080/path_between/George%20Clooney/Sean%20Bean
+// {"NCONSTa":{"IDs":[{"ID":"nm0000123","URL":""}],"Ambiguous":false},"NCONSTB":{"IDs":[{"ID":"nm8902548","URL":""},{"ID":"nm0000293","URL":""}],"Ambiguous":true}}
+
+// TODO: Rename this handler to NameHandler as it is responsible for
+// name disambiguation / mapping rather than determining path
+// have a separate handler take 2 nconsts as args and handle the search
 func (a *App) PathBetweenHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	spew.Dump(vars)
@@ -79,26 +119,33 @@ func (a *App) PathBetweenHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Calculating path between %s and %s\n", actorA, actorB)
 
 	// lookup nconst for actors
-	possibleA, err := nconstsForName(a.db, actorA)
+	nconstsA, err := nconstsForName(a.db, actorA)
 	// TODO: some better error handling / response for user's sake
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	possibleB, err := nconstsForName(a.db, actorB)
+	nconstsB, err := nconstsForName(a.db, actorB)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-
-	spew.Dump(possibleA)
-	spew.Dump(possibleB)
+	resp := NameResponse{
+		nconstsA,
+		nconstsB,
+	}
 
 	// we need to provide a mechansim to resolve ambiguity via the frontend
 	// Say: There are x people with name y in the database
 	// Please choose one
 
-	// do BFS
+	b, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
-	w.Write([]byte("foo"))
+	fmt.Println(string(b))
+
+	w.Write([]byte(b))
 }
