@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/davecgh/go-spew/spew"
 	_ "github.com/lib/pq"
 )
 
@@ -19,5 +20,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	rows, err := db.Query("SELECT * FROM title_principals")
+	if err != nil {
+		log.Fatal(err)
+	}
+	spew.Dump(rows)
 
 }
