@@ -4,18 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
 const (
-	// url path strings
-	actorPathA = "actor_a"
-	actorPathB = "actor_b"
+	actorPathA = "Actor A"
+	actorPathB = "Actor B"
 )
 
 type App struct {
@@ -30,8 +30,11 @@ func NewApp() *App {
 func (a *App) Init() error {
 	router := mux.NewRouter()
 	// TODO: use string constants for these args
-	router.HandleFunc(fmt.Sprintf("/path_between/{%s}/{%s}", actorPathA, actorPathB),
+	router.HandleFunc("/path_between",
 		a.PathBetweenHandler).Methods(http.MethodGet)
+
+	router.HandleFunc("/",
+		a.Search).Methods(http.MethodGet)
 
 	server := &http.Server{
 		Addr:           ":8080",
@@ -61,6 +64,12 @@ func (a *App) Init() error {
 
 func (a *App) Run() error {
 	return a.server.ListenAndServe()
+}
+
+func (a *App) Search(w http.ResponseWriter, r *http.Request) {
+	// serving html search form
+	t, _ := template.ParseFiles("search.gtpl")
+	t.Execute(w, nil)
 }
 
 type NCONST struct {
@@ -103,18 +112,16 @@ func nconstsForName(db *sql.DB, name string) (NCONSTResp, error) {
 	return nconst, err
 }
 
-// Example usage:
-// $ curl localhost:8080/path_between/George%20Clooney/Sean%20Bean
-// {"NCONSTa":{"IDs":[{"ID":"nm0000123","URL":""}],"Ambiguous":false},"NCONSTB":{"IDs":[{"ID":"nm8902548","URL":""},{"ID":"nm0000293","URL":""}],"Ambiguous":true}}
-
+// Usage:
+// $ curl "http://localhost:8080/path_between?Actor+A=Kevin+Bacon&Actor+B=George+Clooney"
+// {"NCONSTa":{"IDs":[{"ID":"nm0000102","URL":""},{"ID":"nm3636162","URL":""},{"ID":"nm4025714","URL":""}],"Ambiguous":true},"NCONSTB":{"IDs":[{"ID":"nm0000123","URL":""}],"Ambiguous":false}}
 // TODO: Rename this handler to NameHandler as it is responsible for
 // name disambiguation / mapping rather than determining path
 // have a separate handler take 2 nconsts as args and handle the search
 func (a *App) PathBetweenHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	spew.Dump(vars)
-	actorA := vars[actorPathA]
-	actorB := vars[actorPathB]
+	r.ParseForm() //Parse url parameters passed, then parse the response packet for the POST body (request body)
+	actorA := strings.Join(r.Form[actorPathA], "")
+	actorB := strings.Join(r.Form[actorPathB], "")
 
 	log.Printf("Calculating path between %s and %s\n", actorA, actorB)
 
