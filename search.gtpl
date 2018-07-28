@@ -3,8 +3,8 @@
 <body>
 
 <form action="/path_between">
-First name: <input type="text" name="Actor A" value="Kevin Bacon"><br>
-Last name: <input type="text" name="Actor B" value=""><br>
+Actor A: <input type="text" name="Actor A" value="Kevin Bacon"><br>
+Actor B: <input type="text" name="Actor B" value=""><br>
 <input type="submit" value="Submit">
 </form>
 

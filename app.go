@@ -30,11 +30,14 @@ func NewApp() *App {
 func (a *App) Init() error {
 	router := mux.NewRouter()
 	// TODO: use string constants for these args
-	router.HandleFunc("/path_between",
-		a.PathBetweenHandler).Methods(http.MethodGet)
+	router.HandleFunc("/resolve_name",
+		a.NameHandler).Methods(http.MethodGet)
 
 	router.HandleFunc("/",
 		a.Search).Methods(http.MethodGet)
+
+	router.HandleFunc("/path_between",
+		a.PathBetweenHandler).Methods(http.MethodGet)
 
 	server := &http.Server{
 		Addr:           ":8080",
@@ -112,13 +115,13 @@ func nconstsForName(db *sql.DB, name string) (NCONSTResp, error) {
 	return nconst, err
 }
 
-// Usage:
-// $ curl "http://localhost:8080/path_between?Actor+A=Kevin+Bacon&Actor+B=George+Clooney"
+// Usage: $ curl "http://localhost:8080/path_between?Actor+A=Kevin+Bacon&Actor+B=George+Clooney"
 // {"NCONSTa":{"IDs":[{"ID":"nm0000102","URL":""},{"ID":"nm3636162","URL":""},{"ID":"nm4025714","URL":""}],"Ambiguous":true},"NCONSTB":{"IDs":[{"ID":"nm0000123","URL":""}],"Ambiguous":false}}
-// TODO: Rename this handler to NameHandler as it is responsible for
-// name disambiguation / mapping rather than determining path
-// have a separate handler take 2 nconsts as args and handle the search
 func (a *App) PathBetweenHandler(w http.ResponseWriter, r *http.Request) {
+}
+
+// NameHandler handles disambiguation between
+func (a *App) NameHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() //Parse url parameters passed, then parse the response packet for the POST body (request body)
 	actorA := strings.Join(r.Form[actorPathA], "")
 	actorB := strings.Join(r.Form[actorPathB], "")
