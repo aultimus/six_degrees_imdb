@@ -36,26 +36,10 @@ if args.do_get:
 				with open(data_file_name, 'wb') as f_data_file:
 					f_data_file.write(data)
 
+		# TODO: head data files into .test.tsv data files
+
+
 # do_get == false assumes unarchived data files exist
-
-def replace_null(s):
-	return s.replace(r"\N", "0")
-
-def gen_insert_string(table_name, col_names, data_str):
-	d = replace_null(data_str)
-	d = d.replace("'", "''")
-	d = d.replace('"', '""')
-	l = d.rstrip("\n").split("\t")
-	num_data = len(l)
-	d = str(l).lstrip("[").rstrip("]").replace('"', "'")
-	d = d.replace("\\'", "")
-
-	num_cols = len(col_names.split(","))
-	if num_cols != num_data:
-		raise ValueError("bad data does not have correct number of cols. Wants %d, has %d, %s" % (num_cols, num_data, data_str))
-	s = """INSERT INTO "%s"(%s) VALUES (%s)""" % (table_name, col_names, d)
-	#print(s)
-	return s
 
 def db_title_principals(cursor, f_name):
 	print("beginning title_principals db update")
@@ -66,27 +50,12 @@ def db_title_principals(cursor, f_name):
 	PRIMARY KEY(tconst, nconst)
 	);""")
 
-	with open(f_name) as f:
-	# TODO as list comprehension for efficiency?
-	# data = [line.rstrip("\n").split("\t") for line in f.readlines()]
-		line_no = 0 # skip header
-		for line in f:
-			if line_no != 0:
-					try:
-						s = gen_insert_string("title_principals", "tconst, nconst", line)
-						cursor.execute(s)
-						#print(s)
-					except ValueError as e:
-						print(e)
-						traceback.print_exc()
-						continue
-			if line_no%10000==0:
-				print(line_no)
-			line_no+=1
-		conn.commit()
+	cursor.execute("""COPY title_principals FROM '%s'""" % (os.path.join(os.getcwd(), f_name)))
+	conn.commit()
 
 	# as a test
 	cursor.execute("""SELECT * FROM title_principals WHERE tconst = 'tt0000001';""")
+
 	rows = cursor.fetchall()
 	print(rows)
 	print("completed title_principals db update")
@@ -106,21 +75,7 @@ def db_title_basics(cursor, f_name):
 	genres				text
 	);""")
 
-	with open(f_name) as f:
-		line_no = 0 # skip header
-		for line in f:
-			if line_no != 0:
-				try:
-					s = gen_insert_string("title_basics", "tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres", line)
-					#print(s)
-					cursor.execute(s)
-				except ValueError as e:
-					print(e)
-					traceback.print_exc()
-					continue
-			if line_no%10000==0:
-				print(line_no)
-			line_no+=1
+	cursor.execute("""COPY title_basics FROM '%s'""" % (os.path.join(os.getcwd(), f_name)))
 	conn.commit()
 
 	# as a test
@@ -143,22 +98,9 @@ def db_name_basics(cursor, f_name):
 	knownForTitles text
 	);""")
 
-	with open(f_name) as f:
-		line_no = 0 # skip header
-		for line in f:
-			if line_no != 0:
-				try:
-					s = gen_insert_string("name_basics", "nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles", line)
-					#print(s)
-					cursor.execute(s)
-				except ValueError as e:
-					print(e)
-					traceback.print_exc()
-					continue
-			if line_no%10000==0:
-				print(line_no)
-			line_no+=1
+	cursor.execute("""COPY name_basics FROM '%s'""" % (os.path.join(os.getcwd(), f_name)))
 	conn.commit()
+
 	print("completed name_basics db update")
 
 
