@@ -33,8 +33,11 @@ if args.do_get:
 		if not os.path.isfile(data_file_name):
 			with open(f_name), gzip.open(f_name, 'rb') as f_archive:
 				data = f_archive.read()
+				# remove first line of data so it can be properly imported using COPY
+				data = bytes(data.decode("utf-8").split("\n", 1)[1], "utf8")
 				with open(data_file_name, 'wb') as f_data_file:
 					f_data_file.write(data)
+
 
 		# TODO: head data files into .test.tsv data files
 
