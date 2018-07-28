@@ -16,6 +16,9 @@ parser.add_argument('--drop-tables', dest='drop_tables', action='store_true')
 
 args = parser.parse_args()
 
+# size of test data files
+head_size = 20
+
 if args.do_get:
 	print("checking if we need to fetch or unpack data")
 	# get data
@@ -23,6 +26,7 @@ if args.do_get:
 	s3 = boto3.resource('s3')
 	for f_name in file_names:
 		data_file_name = f_name.rstrip(".gz")
+		test_data_file_name = data_file_name.replace(".tsv", ".test.tsv")
 
 		# download data archive if it does not exist
 		if not os.path.isfile(f_name):
@@ -34,13 +38,14 @@ if args.do_get:
 			with open(f_name), gzip.open(f_name, 'rb') as f_archive:
 				data = f_archive.read()
 				# remove first line of data so it can be properly imported using COPY
-				data = bytes(data.decode("utf-8").split("\n", 1)[1], "utf8")
-				with open(data_file_name, 'wb') as f_data_file:
-					f_data_file.write(data)
+				s = data.decode("utf-8").split("\n", 1)[1]
+				with open(data_file_name, 'w') as f_data_file:
+					f_data_file.write(s)
 
-
-		# TODO: head data files into .test.tsv data files
-
+				# TODO: head data files into .test.tsv data files
+				with open(test_data_file_name, 'w') as f_test_data_file:
+					head_s = '\n'.join(s.split("\n")[0:head_size+1])
+					f_test_data_file.write(head_s)
 
 # do_get == false assumes unarchived data files exist
 
