@@ -80,6 +80,7 @@ func doSearchNCONST(db *sql.DB, nconst1, nconst2 string) ([]Title, error) {
 // TODO: should really use an ORM for this
 // TODO: Handle case insensitivity?
 // TODO: batching sql ops?
+// TODO: Should really be returning []Principal rather than []nconst
 func nconstsForName(db *sql.DB, name string) (NCONSTResp, error) {
 	rows, err := db.Query("SELECT nconst FROM name_basics WHERE primaryname = $1", name)
 	defer rows.Close()

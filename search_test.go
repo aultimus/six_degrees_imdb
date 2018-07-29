@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	bruceWillisName   = "Bruce Willis"
 	bruceWillisNCONST = "nm0000246"
 	kevinBaconNCONST  = "nm0000102"
 )
@@ -28,6 +29,18 @@ func TestMain(m *testing.M) {
 	}
 	ret := m.Run()
 	os.Exit(ret)
+}
+
+func TestNCONSTSForName(t *testing.T) {
+	a := assert.New(t)
+	resp, err := nconstsForName(testDB, "Bruce Willis")
+	a.NoError(err)
+	a.False(resp.Ambiguous)
+	a.NotEmpty(resp.IDs)
+	a.Equal(bruceWillisNCONST, resp.IDs[0].ID)
+
+	// TODO: do test for an ambiguous name
+	// we still need to work out how we are resolving ambiguity in our system
 }
 
 func TestDoSearchNCONST(t *testing.T) {
