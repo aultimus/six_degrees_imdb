@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	actorPathA = "Actor A"
-	actorPathB = "Actor B"
+	actorPathA  = "Actor A"
+	actorPathB  = "Actor B"
+	nconstPathA = "nconst A"
+	nconstPathB = "nconst B"
 )
 
 type App struct {
@@ -90,6 +92,33 @@ type NameResponse struct {
 	NCONSTB NCONSTResp
 }
 
+// struct definitions are duplicated here as well as in the python, we could deduplicate them if we
+// rewrote the python in go
+
+// Title represents the rich description of a movie title
+type Title struct {
+	tconst         string
+	titleType      string
+	primaryTitle   string
+	originalTitle  string
+	isAdult        int
+	startYear      int
+	endYear        int
+	runtimeMinutes int
+	genres         string
+	nconst         string // should be []string?
+}
+
+// Principal represents a rich description of a principal
+type Principal struct {
+	nconst            string
+	primaryName       string
+	birthYear         int
+	deathYear         int
+	primaryProfession string
+	knownForTitles    string // should be []string?
+}
+
 // TODO: should really use an ORM for this
 // TODO: Handle case insensitivity?
 
@@ -115,12 +144,17 @@ func nconstsForName(db *sql.DB, name string) (NCONSTResp, error) {
 	return nconst, err
 }
 
-// Usage: $ curl "http://localhost:8080/path_between?Actor+A=Kevin+Bacon&Actor+B=George+Clooney"
-// {"NCONSTa":{"IDs":[{"ID":"nm0000102","URL":""},{"ID":"nm3636162","URL":""},{"ID":"nm4025714","URL":""}],"Ambiguous":true},"NCONSTB":{"IDs":[{"ID":"nm0000123","URL":""}],"Ambiguous":false}}
+// PathBetweenHandler ...
+// Usage: $ curl "http://localhost:8080/path_between?nconst+A=nm0000102&nconst+B=nm3636162"
+// {film1, film2, film3...}
 func (a *App) PathBetweenHandler(w http.ResponseWriter, r *http.Request) {
+	nconstA := strings.Join(r.Form[nconstPathA], "")
+	nconstB := strings.Join(r.Form[nconstPathB], "")
+	fmt.Printf("PathBetweenHandler %s %s\n", nconstA, nconstB)
+	w.Write([]byte("foo"))
 }
 
-// NameHandler handles disambiguation between
+// NameHandler handles disambiguation between textual names
 func (a *App) NameHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() //Parse url parameters passed, then parse the response packet for the POST body (request body)
 	actorA := strings.Join(r.Form[actorPathA], "")
