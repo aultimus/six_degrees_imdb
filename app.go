@@ -1,7 +1,6 @@
 package sixdegreesimdb
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -22,17 +22,17 @@ const (
 
 type App struct {
 	server *http.Server
-	db     *sql.DB
+	db     *sqlx.DB
 }
 
 func NewApp() *App {
 	return &App{}
 }
 
-func connectDB() (*sql.DB, error) {
+func connectDB() (*sqlx.DB, error) {
 	// by default go sql client seems to try to connect over tcp prompting a password
 	// so we need to use this brittle string
-	return sql.Open("postgres", "postgresql:///aulty?host=/var/run/postgresql")
+	return sqlx.Open("postgres", "postgresql:///aulty?host=/var/run/postgresql")
 }
 
 func (a *App) Init() error {
@@ -100,25 +100,26 @@ func (a *App) NameHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Calculating path between %s and %s\n", actorA, actorB)
 
 	// lookup nconst for actors
-	nconstsA, err := nconstsForName(a.db, actorA)
+	principalsA, err := principalsForName(a.db, actorA)
 	// TODO: some better error handling / response for user's sake
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	nconstsB, err := nconstsForName(a.db, actorB)
+	principalsB, err := principalsForName(a.db, actorB)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	resp := NameResponse{
-		nconstsA,
-		nconstsB,
-	}
 
-	// we need to provide a mechansim to resolve ambiguity via the frontend
+	// TODO: we need to provide a mechansim to resolve ambiguity via the frontend
 	// Say: There are x people with name y in the database
 	// Please choose one
+
+	resp := NameResponse{
+		NCONSTResp{principalsA},
+		NCONSTResp{principalsB},
+	}
 
 	b, err := json.Marshal(resp)
 	if err != nil {
