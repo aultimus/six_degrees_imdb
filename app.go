@@ -29,6 +29,12 @@ func NewApp() *App {
 	return &App{}
 }
 
+func connectDB() (*sql.DB, error) {
+	// by default go sql client seems to try to connect over tcp prompting a password
+	// so we need to use this brittle string
+	return sql.Open("postgres", "postgresql:///aulty?host=/var/run/postgresql")
+}
+
 func (a *App) Init() error {
 	router := mux.NewRouter()
 	// TODO: use string constants for these args
@@ -51,9 +57,7 @@ func (a *App) Init() error {
 	}
 	a.server = server
 
-	// by default go sql client seems to try to connect over tcp prompting a password
-	// so we need to use this brittle string
-	db, err := sql.Open("postgres", "postgresql:///aulty?host=/var/run/postgresql")
+	db, err := connectDB()
 	if err != nil {
 		return err
 	}
@@ -75,73 +79,6 @@ func (a *App) Search(w http.ResponseWriter, r *http.Request) {
 	// serving html search form
 	t, _ := template.ParseFiles("search.gtpl")
 	t.Execute(w, nil)
-}
-
-type NCONST struct {
-	ID  string
-	URL string
-}
-
-type NCONSTResp struct {
-	IDs       []NCONST
-	Ambiguous bool
-}
-
-type NameResponse struct {
-	NCONSTa NCONSTResp
-	NCONSTB NCONSTResp
-}
-
-// struct definitions are duplicated here as well as in the python, we could deduplicate them if we
-// rewrote the python in go
-
-// Title represents the rich description of a movie title
-type Title struct {
-	tconst         string
-	titleType      string
-	primaryTitle   string
-	originalTitle  string
-	isAdult        int
-	startYear      int
-	endYear        int
-	runtimeMinutes int
-	genres         string
-	nconst         string // should be []string?
-}
-
-// Principal represents a rich description of a principal
-type Principal struct {
-	nconst            string
-	primaryName       string
-	birthYear         int
-	deathYear         int
-	primaryProfession string
-	knownForTitles    string // should be []string?
-}
-
-// TODO: should really use an ORM for this
-// TODO: Handle case insensitivity?
-
-// TODO: batching sql ops?
-func nconstsForName(db *sql.DB, name string) (NCONSTResp, error) {
-	rows, err := db.Query("SELECT nconst FROM name_basics WHERE primaryname = $1", name)
-	defer rows.Close()
-	//spew.Dump(rows)
-	nconst := NCONSTResp{IDs: make([]NCONST, 0, 0)}
-	for rows.Next() {
-		var n string
-		err = rows.Scan(&n)
-		if err != nil {
-			return nconst, err
-		}
-
-		// TODO: format url
-		nconst.IDs = append(nconst.IDs, NCONST{n, ""})
-	}
-	if len(nconst.IDs) > 1 {
-		nconst.Ambiguous = true
-	}
-	return nconst, err
 }
 
 // PathBetweenHandler ...
