@@ -50,6 +50,13 @@ type Principal struct {
 	KnownForTitles    string        `db:"knownfortitles"` // should be []string?
 }
 
+// link represents an element in the chain between two principals. A Link signifies that principal
+// was in title
+type Link struct {
+	title     Title
+	principal Principal
+}
+
 func lookupName(db *sqlx.DB, name string) (*Principal, error) {
 	principals, err := principalsForName(db, name)
 	if err != nil {
@@ -63,7 +70,7 @@ func lookupName(db *sqlx.DB, name string) (*Principal, error) {
 
 // doSearchName given a db and two actor names searches for a path between the two names
 // TODO: Limit to only actors for now to put off rhe need for resolving name disambiguation
-func doSearchName(db *sqlx.DB, name1, name2 string) ([]Title, error) {
+func doSearchName(db *sqlx.DB, name1, name2 string) ([]Link, error) {
 	principal1, err := lookupName(db, name1)
 	if err != nil {
 		return nil, err
@@ -77,7 +84,7 @@ func doSearchName(db *sqlx.DB, name1, name2 string) ([]Title, error) {
 }
 
 // doSearchNCONST given a db and two actor nconst values searches for a path between the two nconsts
-func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) ([]Title, error) {
+func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) ([]Link, error) {
 	principal1, err := principalForNCONST(db, nconst1)
 	if err != nil {
 		return nil, err
@@ -90,8 +97,8 @@ func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) ([]Title, error) {
 	return doSearchPrincipals(db, principal1, principal2)
 }
 
-func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) ([]Title, error) {
-	return []Title{}, nil
+func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) ([]Link, error) {
+	return []Link{}, nil
 }
 
 // TODO: should really use an ORM for this

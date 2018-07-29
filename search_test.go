@@ -44,9 +44,9 @@ func TestPrincipalsForName(t *testing.T) {
 
 func TestDoSearchNCONST(t *testing.T) {
 	a := assert.New(t)
-	titles, err := doSearchNCONST(testDB, bruceWillisNCONST, kevinBaconNCONST)
+	links, err := doSearchNCONST(testDB, bruceWillisNCONST, kevinBaconNCONST)
 	a.NoError(err)
-	a.Equal([]Title{}, titles)
+	a.Equal([]Link{}, links)
 }
 
 // TODO: Profile different search strategies
