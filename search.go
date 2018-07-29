@@ -50,11 +50,27 @@ type Principal struct {
 	KnownForTitles    string        `db:"knownfortitles"` // should be []string?
 }
 
-// link represents an element in the chain between two principals. A Link signifies that principal
+// Link represents an element in the chain between two principals. A Link signifies that principal
 // was in title
 type Link struct {
-	title     Title
-	principal Principal
+	Title     *Title
+	Principal *Principal
+}
+
+// Chain represents a result in
+// TODO: Optimise to use less data and then retrieve that data when we want to display a chain?
+type Chain struct {
+	Start *Principal
+	End   *Principal
+	Links []Link
+}
+
+func newChain(principal1, principal2 *Principal) *Chain {
+	return &Chain{
+		Start: principal1,
+		End:   principal2,
+		Links: make([]Link, 0, 0),
+	}
 }
 
 func lookupName(db *sqlx.DB, name string) (*Principal, error) {
@@ -70,7 +86,7 @@ func lookupName(db *sqlx.DB, name string) (*Principal, error) {
 
 // doSearchName given a db and two actor names searches for a path between the two names
 // TODO: Limit to only actors for now to put off rhe need for resolving name disambiguation
-func doSearchName(db *sqlx.DB, name1, name2 string) ([]Link, error) {
+func doSearchName(db *sqlx.DB, name1, name2 string) (*Chain, error) {
 	principal1, err := lookupName(db, name1)
 	if err != nil {
 		return nil, err
@@ -84,7 +100,7 @@ func doSearchName(db *sqlx.DB, name1, name2 string) ([]Link, error) {
 }
 
 // doSearchNCONST given a db and two actor nconst values searches for a path between the two nconsts
-func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) ([]Link, error) {
+func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) (*Chain, error) {
 	principal1, err := principalForNCONST(db, nconst1)
 	if err != nil {
 		return nil, err
@@ -97,8 +113,8 @@ func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) ([]Link, error) {
 	return doSearchPrincipals(db, principal1, principal2)
 }
 
-func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) ([]Link, error) {
-	return []Link{}, nil
+func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) (*Chain, error) {
+	return newChain(principal1, principal2), nil
 }
 
 // TODO: should really use an ORM for this
