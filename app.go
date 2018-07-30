@@ -62,7 +62,7 @@ func (a *App) Init() error {
 		return err
 	}
 	// confirm connection to db succeeded
-	err = db.Ping()
+	err = db.db.Ping()
 	if err != nil {
 		return err
 	}

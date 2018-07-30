@@ -156,7 +156,7 @@ func NewDB() (*DB, error) {
 }
 
 type DB struct {
-	*sqlx.DB
+	db *sqlx.DB
 }
 
 // TODO: Move db specific code into its own file or package away from general search algorithms
@@ -166,32 +166,32 @@ type DB struct {
 // TODO: batching sql ops?
 func (db *DB) principalsForName(name string) ([]Principal, error) {
 	var principals []Principal
-	err := db.Select(&principals, "SELECT * FROM name_basics WHERE primaryname = $1", name)
+	err := db.db.Select(&principals, "SELECT * FROM name_basics WHERE primaryname = $1", name)
 	return principals, err
 }
 
 func (db *DB) principalForNCONST(nconst string) (*Principal, error) {
 	var principal Principal
-	err := db.Get(&principal, "SELECT * FROM name_basics WHERE nconst = $1", nconst)
+	err := db.db.Get(&principal, "SELECT * FROM name_basics WHERE nconst = $1", nconst)
 	return &principal, err
 }
 
 // given a tconst find all nconst - table title_principals
 func (db *DB) nconstsForTCONST(tconst string) ([]string, error) {
 	var nconsts []string
-	err := db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1", tconst)
+	err := db.db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1", tconst)
 	return nconsts, err
 }
 
 // given an nconst find all tconst - table title_principals
 func (db *DB) tconstsForNCONST(nconst string) ([]string, error) {
 	var tconsts []string
-	err := db.Select(&tconsts, "SELECT tconst FROM title_principals WHERE nconst = $1", nconst)
+	err := db.db.Select(&tconsts, "SELECT tconst FROM title_principals WHERE nconst = $1", nconst)
 	return tconsts, err
 }
 
 func (db *DB) titleForTCONST(tconst string) (Title, error) {
 	var title Title
-	err := db.Get(&title, "SELECT * FROM title_basics WHERE tconst = $1", tconst)
+	err := db.db.Get(&title, "SELECT * FROM title_basics WHERE tconst = $1", tconst)
 	return title, err
 }
