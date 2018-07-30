@@ -57,10 +57,10 @@ def db_title_principals(cursor, f_name):
     print("beginning title_principals db update")
 
     cursor.execute("""CREATE TABLE "title_principals" (
-	tconst text,
-	nconst text,
-	PRIMARY KEY(tconst, nconst)
-	);""")
+    tconst text,
+    nconst text,
+    PRIMARY KEY(tconst, nconst)
+    );""")
 
     cursor.execute("""COPY title_principals FROM '%s'""" %
                    (os.path.join(os.getcwd(), f_name)))
@@ -79,16 +79,16 @@ def db_title_basics(cursor, f_name):
     print("beginning title_basics db update")
 
     cursor.execute("""CREATE TABLE "title_basics" (
-	tconst				text primary key,
-	titleType			text,
-	primaryTitle		text,
-	originalTitle		text,
-	isAdult				int,
-	startYear			int,
-	endYear				int,
-	runtimeMinutes		int,
-	genres				text
-	);""")
+    tconst                text primary key,
+    titleType            text,
+    primaryTitle        text,
+    originalTitle        text,
+    isAdult                int,
+    startYear            int,
+    endYear                int,
+    runtimeMinutes        int,
+    genres                text
+    );""")
 
     cursor.execute("""COPY title_basics FROM '%s'""" %
                    (os.path.join(os.getcwd(), f_name)))
@@ -109,13 +109,13 @@ def db_name_basics(cursor, f_name):
     print("beginning name_basics db update")
 
     cursor.execute("""CREATE TABLE "name_basics" (
-	nconst text primary key,
-	primaryName text,
-	birthYear int,
-	deathYear int,
-	primaryProfession text,
-	knownForTitles text
-	);""")
+    nconst text primary key,
+    primaryName text,
+    birthYear int,
+    deathYear int,
+    primaryProfession text,
+    knownForTitles text
+    );""")
 
     cursor.execute("""COPY name_basics FROM '%s'""" %
                    (os.path.join(os.getcwd(), f_name)))
