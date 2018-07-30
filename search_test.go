@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,13 +17,13 @@ const (
 	dieHardName       = "Die Hard"
 )
 
-var testDB *sqlx.DB
+var testDB *DB
 
 func TestMain(m *testing.M) {
 	// TODO: Should we mock somehow and have tests without a requirement on the db?
 	// set up db
 	var err error
-	testDB, err = connectDB()
+	testDB, err = NewDB()
 	if err != nil {
 		fmt.Printf("failed to init tests: %s\n", err.Error())
 		os.Exit(-1)
@@ -35,7 +34,7 @@ func TestMain(m *testing.M) {
 
 func TestPrincipalsForName(t *testing.T) {
 	a := assert.New(t)
-	principals, err := principalsForName(testDB, bruceWillisName)
+	principals, err := testDB.principalsForName(bruceWillisName)
 	a.NoError(err)
 	a.Equal(1, len(principals))
 	a.Equal(bruceWillisNCONST, principals[0].NCONST)
@@ -46,7 +45,7 @@ func TestPrincipalsForName(t *testing.T) {
 
 func TestPrincipalForNCONST(t *testing.T) {
 	a := assert.New(t)
-	principal, err := principalForNCONST(testDB, bruceWillisNCONST)
+	principal, err := testDB.principalForNCONST(bruceWillisNCONST)
 	a.NoError(err)
 	a.Equal(bruceWillisName, principal.PrimaryName)
 	a.Equal(bruceWillisNCONST, principal.NCONST)
@@ -54,32 +53,25 @@ func TestPrincipalForNCONST(t *testing.T) {
 
 func TestNCONSTSForTCONST(t *testing.T) {
 	a := assert.New(t)
-	nconsts, err := nconstsForTCONST(testDB, dieHardTCONST)
+	nconsts, err := testDB.nconstsForTCONST(dieHardTCONST)
 	a.NoError(err)
 	a.Contains(nconsts, bruceWillisNCONST)
 }
 
 func TestTCONSTSForNCONST(t *testing.T) {
 	a := assert.New(t)
-	tconsts, err := tconstsForNCONST(testDB, bruceWillisNCONST)
+	tconsts, err := testDB.tconstsForNCONST(bruceWillisNCONST)
 	a.NoError(err)
 	a.Contains(tconsts, dieHardTCONST)
 }
 
 func TestTitleForTCONST(t *testing.T) {
 	a := assert.New(t)
-	title, err := titleForTCONST(testDB, dieHardTCONST)
+	title, err := testDB.titleForTCONST(dieHardTCONST)
 	a.NoError(err)
 	a.Equal(dieHardName, title.PrimaryTitle)
 	a.Equal(dieHardTCONST, title.TCONST)
 }
-
-//
-//func titleForTCONST(db *sqlx.DB, tconst string) ([]Title, error) {
-//	var titles []Title
-//	err := db.Select(&titles, "SELECT * FROM title_basics WHERE tconst = $1", tconst)
-//	return titles, err
-//}
 
 func TestDoSearchNCONST(t *testing.T) {
 	a := assert.New(t)

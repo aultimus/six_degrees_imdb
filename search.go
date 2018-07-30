@@ -98,8 +98,8 @@ func newChain(principal1, principal2 *Principal) *Chain {
 
 // TODO: we shouldn't be passing in a literal *sqlx.DB here, we should be using some abstraction to
 // enable mocking
-func lookupName(db *sqlx.DB, name string) (*Principal, error) {
-	principals, err := principalsForName(db, name)
+func lookupName(db *DB, name string) (*Principal, error) {
+	principals, err := db.principalsForName(name)
 	if err != nil {
 		return &Principal{}, err
 	}
@@ -111,7 +111,7 @@ func lookupName(db *sqlx.DB, name string) (*Principal, error) {
 
 // doSearchName given a db and two actor names searches for a path between the two names
 // TODO: Limit to only actors for now to put off rhe need for resolving name disambiguation
-func doSearchName(db *sqlx.DB, name1, name2 string) (*Chain, error) {
+func doSearchName(db *DB, name1, name2 string) (*Chain, error) {
 	principal1, err := lookupName(db, name1)
 	if err != nil {
 		return nil, err
@@ -125,13 +125,13 @@ func doSearchName(db *sqlx.DB, name1, name2 string) (*Chain, error) {
 }
 
 // doSearchNCONST given a db and two actor nconst values searches for a path between the two nconsts
-func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) (*Chain, error) {
-	principal1, err := principalForNCONST(db, nconst1)
+func doSearchNCONST(db *DB, nconst1, nconst2 string) (*Chain, error) {
+	principal1, err := db.principalForNCONST(nconst1)
 	if err != nil {
 		return nil, err
 	}
 
-	principal2, err := principalForNCONST(db, nconst2)
+	principal2, err := db.principalForNCONST(nconst2)
 	if err != nil {
 		return nil, err
 	}
@@ -146,45 +146,51 @@ func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) (*Chain, error) {
 // 5. find all the tconst that nconstX is in
 // 6. GOTO 2
 
-func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) (*Chain, error) {
+func doSearchPrincipals(db *DB, principal1, principal2 *Principal) (*Chain, error) {
 	return newChain(principal1, principal2), nil
 }
 
-// TODO: Move db specific code into its own file or package away from general search algorithmss
+func NewDB() (*DB, error) {
+	db, err := connectDB()
+	return &DB{db}, err
+}
 
-// TODO: These db specific functions should all be methods on some object which can be swapped out,
-// ie. an abstraction layer
+type DB struct {
+	*sqlx.DB
+}
+
+// TODO: Move db specific code into its own file or package away from general search algorithms
 
 // TODO: should really use an ORM for this
 // TODO: Handle case insensitivity?
 // TODO: batching sql ops?
-func principalsForName(db *sqlx.DB, name string) ([]Principal, error) {
+func (db *DB) principalsForName(name string) ([]Principal, error) {
 	var principals []Principal
 	err := db.Select(&principals, "SELECT * FROM name_basics WHERE primaryname = $1", name)
 	return principals, err
 }
 
-func principalForNCONST(db *sqlx.DB, nconst string) (*Principal, error) {
+func (db *DB) principalForNCONST(nconst string) (*Principal, error) {
 	var principal Principal
 	err := db.Get(&principal, "SELECT * FROM name_basics WHERE nconst = $1", nconst)
 	return &principal, err
 }
 
 // given a tconst find all nconst - table title_principals
-func nconstsForTCONST(db *sqlx.DB, tconst string) ([]string, error) {
+func (db *DB) nconstsForTCONST(tconst string) ([]string, error) {
 	var nconsts []string
 	err := db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1", tconst)
 	return nconsts, err
 }
 
 // given an nconst find all tconst - table title_principals
-func tconstsForNCONST(db *sqlx.DB, nconst string) ([]string, error) {
+func (db *DB) tconstsForNCONST(nconst string) ([]string, error) {
 	var tconsts []string
 	err := db.Select(&tconsts, "SELECT tconst FROM title_principals WHERE nconst = $1", nconst)
 	return tconsts, err
 }
 
-func titleForTCONST(db *sqlx.DB, tconst string) (Title, error) {
+func (db *DB) titleForTCONST(tconst string) (Title, error) {
 	var title Title
 	err := db.Get(&title, "SELECT * FROM title_basics WHERE tconst = $1", tconst)
 	return title, err

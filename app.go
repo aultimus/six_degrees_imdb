@@ -22,7 +22,7 @@ const (
 
 type App struct {
 	server *http.Server
-	db     *sqlx.DB
+	db     *DB
 }
 
 func NewApp() *App {
@@ -57,7 +57,7 @@ func (a *App) Init() error {
 	}
 	a.server = server
 
-	db, err := connectDB()
+	db, err := NewDB()
 	if err != nil {
 		return err
 	}
@@ -100,13 +100,13 @@ func (a *App) NameHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Calculating path between %s and %s\n", actorA, actorB)
 
 	// lookup nconst for actors
-	principalsA, err := principalsForName(a.db, actorA)
+	principalsA, err := a.db.principalsForName(actorA)
 	// TODO: some better error handling / response for user's sake
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	principalsB, err := principalsForName(a.db, actorB)
+	principalsB, err := a.db.principalsForName(actorB)
 	if err != nil {
 		log.Fatal(err)
 		return
