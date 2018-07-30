@@ -113,6 +113,19 @@ func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) (*Chain, error) {
 	return doSearchPrincipals(db, principal1, principal2)
 }
 
+// BFS
+// 1.given nconstA find all tconst it is in
+// 2. check if nconstB is in any of these tconst
+// 3. if so return the chain
+// 4. find all the nconstX in these tconst
+// 5. find all the tconst that nconstX is in
+// 6. GOTO 2
+
+// lookups to design db for:
+// given an nconst find all tconst - table name_basics doesn't suffice for this as the knownfor
+// field present here  only contains a maximum of four values and as a result is much less
+// exhaustive than the data in the title_principals table. Thus use created table name_titles
+// given a tconst find all nconst - table title_principals
 func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) (*Chain, error) {
 	return newChain(principal1, principal2), nil
 }
@@ -130,4 +143,10 @@ func principalForNCONST(db *sqlx.DB, nconst string) (*Principal, error) {
 	var principal Principal
 	err := db.Get(&principal, "SELECT * FROM name_basics WHERE nconst = $1", nconst)
 	return &principal, err
+}
+
+func principalsForTCONST(db *sqlx.DB, tconst string) ([]Principal, error) {
+	var principals []Principal
+	err := db.Select(&principals, "SELECT ndonst FROM name_basics WHERE tconst = $1", tconst)
+	return principals, err
 }
