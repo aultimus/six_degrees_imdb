@@ -11,13 +11,9 @@ import urllib.request
 
 parser = argparse.ArgumentParser(description='IMDB data updater script')
 parser.add_argument('--do-get', dest='do_get', action='store_true')
-parser.add_argument('--test-data', dest='test_data', action='store_true')
 parser.add_argument('--drop-tables', dest='drop_tables', action='store_true')
 
 args = parser.parse_args()
-
-# size of test data files
-head_size = 20
 
 if args.do_get:
     print("checking if we need to fetch or unpack data")
@@ -26,7 +22,6 @@ if args.do_get:
                   "title.basics.tsv.gz", "name.basics.tsv.gz"]
     for f_name in file_names:
         data_file_name = f_name.rstrip(".gz")
-        test_data_file_name = data_file_name.replace(".tsv", ".test.tsv")
 
         # download data archive if it does not exist
         if not os.path.isfile(f_name):
@@ -42,11 +37,6 @@ if args.do_get:
                 s = data.decode("utf-8").split("\n", 1)[1]
                 with open(data_file_name, 'w') as f_data_file:
                     f_data_file.write(s)
-
-                # TODO: head data files into .test.tsv data files
-                with open(test_data_file_name, 'w') as f_test_data_file:
-                    head_s = '\n'.join(s.split("\n")[0:head_size + 1])
-                    f_test_data_file.write(head_s)
 
 # do_get == false assumes unarchived data files exist
 
@@ -147,13 +137,9 @@ try:
         for cmd in cmds:
             cursor.execute(cmd)
 
-    test_str = ""
-    if args.test_data:
-        test_str = ".test"
-
-    db_title_principals(cursor, "title.principals" + test_str + ".tsv")
-    db_title_basics(cursor, "title.basics" + test_str + ".tsv")
-    db_name_basics(cursor, "name.basics" + test_str + ".tsv")
+    db_title_principals(cursor, "title.principals.tsv")
+    db_title_basics(cursor, "title.basics.tsv")
+    db_name_basics(cursor, "name.basics.tsv")
 
 except Exception as e:
     print("Uh oh, can't connect. Invalid dbname, user or password?")
