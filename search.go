@@ -1,6 +1,8 @@
 package sixdegreesimdb
 
 import (
+	"database/sql"
+
 	"github.com/jmoiron/sqlx"
 
 	"fmt"
@@ -40,26 +42,35 @@ type NameResponse struct {
 
 // Title represents the rich description of a movie title
 type Title struct {
-	TCONST         string `db:"tconst"`
-	TitleType      string `db:"titletype"`
-	PrimaryTitle   string `db:"primarytitle"`
-	OriginalTitle  string `db:"originaltitle"`
-	IsAdult        int    `db:"isadult"`
-	StartYear      int    `db:"startyear"`
-	EndYear        int    `db:"endyear"`
-	RuntimeMinutes int    `db:"runtimeminutes"`
-	Genres         string `db:"genres"`
-	NCONST         string `db:"nconst"` // should be []string?
+	TCONST         string        `db:"tconst"`
+	TitleType      string        `db:"titletype"`
+	PrimaryTitle   string        `db:"primarytitle"`
+	OriginalTitle  string        `db:"originaltitle"`
+	IsAdult        int           `db:"isadult"`
+	StartYear      sql.NullInt64 `db:"startyear"`
+	EndYear        sql.NullInt64 `db:"endyear"`
+	RuntimeMinutes int           `db:"runtimeminutes"`
+	Genres         string        `db:"genres"`
+	NCONST         string        `db:"nconst"` // should be []string?
 }
 
-// Principal represents a rich description of a principal
-type Principal struct {
+type Role struct {
 	Ordering   int    `db:"ordering"`
 	NCONST     string `db:"nconst"`
 	Category   string `db:"category"`
 	Job        string `db:"job"`
 	Characters string `db:"characters"`
-	titles     []Title
+}
+
+// Principal represents a rich description of a principal
+type Principal struct {
+	NCONST            string        `db:"nconst"`
+	PrimaryName       string        `db:"primaryname"`
+	BirthYear         sql.NullInt64 `db:"birthyear"`
+	DeathYear         sql.NullInt64 `db:"deathyear"`
+	PrimaryProfession string        `db:"primaryprofession"`
+	KnownForTitles    string        `db:"knownfortitles"` // kind of pointless field (non-exhaustive). should be []string?
+	titles            []Title
 }
 
 // Link represents an element in the chain between two principals. A Link signifies that principal
@@ -85,6 +96,8 @@ func newChain(principal1, principal2 *Principal) *Chain {
 	}
 }
 
+// TODO: we shouldn't be passing in a literal *sqlx.DB here, we should be using some abstraction to
+// enable mocking
 func lookupName(db *sqlx.DB, name string) (*Principal, error) {
 	principals, err := principalsForName(db, name)
 	if err != nil {
@@ -133,12 +146,14 @@ func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) (*Chain, error) {
 // 5. find all the tconst that nconstX is in
 // 6. GOTO 2
 
-// lookups to design db for:
-// given an nconst find all tconst - table title_principals
-// given a tconst find all nconst - table title_principals
 func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) (*Chain, error) {
 	return newChain(principal1, principal2), nil
 }
+
+// TODO: Move db specific code into its own file or package away from general search algorithmss
+
+// TODO: These db specific functions should all be methods on some object which can be swapped out,
+// ie. an abstraction layer
 
 // TODO: should really use an ORM for this
 // TODO: Handle case insensitivity?
@@ -155,8 +170,22 @@ func principalForNCONST(db *sqlx.DB, nconst string) (*Principal, error) {
 	return &principal, err
 }
 
-func principalsForTCONST(db *sqlx.DB, tconst string) ([]Principal, error) {
-	var principals []Principal
-	err := db.Select(&principals, "SELECT ndonst FROM name_basics WHERE tconst = $1", tconst)
-	return principals, err
+// given a tconst find all nconst - table title_principals
+func nconstsForTCONST(db *sqlx.DB, tconst string) ([]string, error) {
+	var nconsts []string
+	err := db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1", tconst)
+	return nconsts, err
+}
+
+// given an nconst find all tconst - table title_principals
+func tconstsForNCONST(db *sqlx.DB, nconst string) ([]string, error) {
+	var tconsts []string
+	err := db.Select(&tconsts, "SELECT tconst FROM title_principals WHERE nconst = $1", nconst)
+	return tconsts, err
+}
+
+func titleForTCONST(db *sqlx.DB, tconst string) (Title, error) {
+	var title Title
+	err := db.Get(&title, "SELECT * FROM title_basics WHERE tconst = $1", tconst)
+	return title, err
 }

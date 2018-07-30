@@ -14,6 +14,8 @@ const (
 	bruceWillisName   = "Bruce Willis"
 	bruceWillisNCONST = "nm0000246"
 	kevinBaconNCONST  = "nm0000102"
+	dieHardTCONST     = "tt0095016"
+	dieHardName       = "Die Hard"
 )
 
 var testDB *sqlx.DB
@@ -42,12 +44,46 @@ func TestPrincipalsForName(t *testing.T) {
 	// we still need to work out how we are resolving ambiguity in our system
 }
 
+func TestPrincipalForNCONST(t *testing.T) {
+	a := assert.New(t)
+	principal, err := principalForNCONST(testDB, bruceWillisNCONST)
+	a.NoError(err)
+	a.Equal(bruceWillisName, principal.PrimaryName)
+	a.Equal(bruceWillisNCONST, principal.NCONST)
+}
+
+func TestNCONSTSForTCONST(t *testing.T) {
+	a := assert.New(t)
+	nconsts, err := nconstsForTCONST(testDB, dieHardTCONST)
+	a.NoError(err)
+	a.Contains(nconsts, bruceWillisNCONST)
+}
+
+func TestTCONSTSForNCONST(t *testing.T) {
+	a := assert.New(t)
+	tconsts, err := tconstsForNCONST(testDB, bruceWillisNCONST)
+	a.NoError(err)
+	a.Contains(tconsts, dieHardTCONST)
+}
+
+func TestTitleForTCONST(t *testing.T) {
+	a := assert.New(t)
+	title, err := titleForTCONST(testDB, dieHardTCONST)
+	a.NoError(err)
+	a.Equal(dieHardName, title.PrimaryTitle)
+	a.Equal(dieHardTCONST, title.TCONST)
+}
+
+//
+//func titleForTCONST(db *sqlx.DB, tconst string) ([]Title, error) {
+//	var titles []Title
+//	err := db.Select(&titles, "SELECT * FROM title_basics WHERE tconst = $1", tconst)
+//	return titles, err
+//}
+
 func TestDoSearchNCONST(t *testing.T) {
 	a := assert.New(t)
 	chain, err := doSearchNCONST(testDB, bruceWillisNCONST, kevinBaconNCONST)
 	a.NoError(err)
 	a.Equal(2, len(chain.Links))
 }
-
-// TODO: Profile different search strategies
-// BFS, DFS etc
