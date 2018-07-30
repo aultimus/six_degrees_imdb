@@ -3,11 +3,11 @@
 # script to download and unpack imdb data files
 
 import argparse
-import boto3
 import gzip
 import os
 import psycopg2
 import traceback
+import urllib.request
 
 parser = argparse.ArgumentParser(description='IMDB data updater script')
 parser.add_argument('--do-get', dest='do_get', action='store_true')
@@ -24,7 +24,6 @@ if args.do_get:
     # get data
     file_names = ["title.principals.tsv.gz",
                   "title.basics.tsv.gz", "name.basics.tsv.gz"]
-    s3 = boto3.resource('s3')
     for f_name in file_names:
         data_file_name = f_name.rstrip(".gz")
         test_data_file_name = data_file_name.replace(".tsv", ".test.tsv")
@@ -32,9 +31,8 @@ if args.do_get:
         # download data archive if it does not exist
         if not os.path.isfile(f_name):
             print("downloading " + f_name)
-            s3.Bucket("imdb-datasets").download_file("documents/v1/current/" +
-                                                     f_name, f_name, ExtraArgs={"RequestPayer": "requester"})
-
+            urllib.request.urlretrieve(
+                "https://datasets.imdbws.com/%s" % f_name, f_name)
         # extract archive if uncompressed data file does not exist
         if not os.path.isfile(data_file_name):
             with open(f_name), gzip.open(f_name, 'rb') as f_archive:
@@ -56,10 +54,15 @@ if args.do_get:
 def db_title_principals(cursor, f_name):
     print("beginning title_principals db update")
 
+    # TODO: add index on nconst
     cursor.execute("""CREATE TABLE "title_principals" (
     tconst text,
+    ordering int,
     nconst text,
-    PRIMARY KEY(tconst, nconst)
+    category text,
+    job text,
+    characters text,
+    PRIMARY KEY(tconst, ordering)
     );""")
 
     cursor.execute("""COPY title_principals FROM '%s'""" %

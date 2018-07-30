@@ -1,12 +1,24 @@
 package sixdegreesimdb
 
 import (
-	"database/sql"
-
 	"github.com/jmoiron/sqlx"
 
 	"fmt"
 )
+
+// Note that new imdb data sets now replace the old peculiarly formatted .list files. The .list
+// files had a horrible format and were extremely brittle and difficult to parse lacking fixed keys
+// but were at least exhaustive. They are now no longer updated in favour of the new format. I
+// previously tried to parse the old format at the start of this project with great frustration and
+// difficulty.
+
+// The new format (TSV) whilst sane and receiving updates is non-exhaustive, thus using this data,
+// we cannot hope to achieve the same results as say oracleofbacon.org
+
+// old: ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/
+// new: https://datasets.imdbws.com/
+// new format documentation: https://www.imdb.com/interfaces/
+// discussion: https://getsatisfaction.com/imdb/topics/imdb-data-now-available-in-amazon-s3
 
 type NCONST struct {
 	ID  string
@@ -42,12 +54,12 @@ type Title struct {
 
 // Principal represents a rich description of a principal
 type Principal struct {
-	NCONST            string        `db:"nconst"`
-	PrimaryName       string        `db:"primaryname"`
-	BirthYear         sql.NullInt64 `db:"birthyear"`
-	DeathYear         sql.NullInt64 `db:"deathyear"`
-	PrimaryProfession string        `db:"primaryprofession"`
-	KnownForTitles    string        `db:"knownfortitles"` // should be []string?
+	Ordering   int    `db:"ordering"`
+	NCONST     string `db:"nconst"`
+	Category   string `db:"category"`
+	Job        string `db:"job"`
+	Characters string `db:"characters"`
+	titles     []Title
 }
 
 // Link represents an element in the chain between two principals. A Link signifies that principal
@@ -122,9 +134,7 @@ func doSearchNCONST(db *sqlx.DB, nconst1, nconst2 string) (*Chain, error) {
 // 6. GOTO 2
 
 // lookups to design db for:
-// given an nconst find all tconst - table name_basics doesn't suffice for this as the knownfor
-// field present here  only contains a maximum of four values and as a result is much less
-// exhaustive than the data in the title_principals table. Thus use created table name_titles
+// given an nconst find all tconst - table title_principals
 // given a tconst find all nconst - table title_principals
 func doSearchPrincipals(db *sqlx.DB, principal1, principal2 *Principal) (*Chain, error) {
 	return newChain(principal1, principal2), nil
