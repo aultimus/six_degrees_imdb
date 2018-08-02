@@ -367,7 +367,7 @@ func (db *DB) principalForNCONST(nconst string) (*Principal, error) {
 // given a tconst find all nconst - table title_principals
 func (db *DB) nconstsForTCONST(tconst string) ([]string, error) {
 	var nconsts []string
-	err := db.db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1", tconst)
+	err := db.db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1 AND (category='actor' OR category='actress')", tconst)
 	return nconsts, err
 }
 
