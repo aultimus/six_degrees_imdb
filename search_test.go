@@ -73,9 +73,34 @@ func TestTitleForTCONST(t *testing.T) {
 	a.Equal(dieHardTCONST, title.TCONST)
 }
 
-func TestDoSearchNCONST(t *testing.T) {
+//func TestDoSearchNCONST(t *testing.T) {
+//	a := assert.New(t)
+//	chain, err := doSearchNCONST(testDB, bruceWillisNCONST, kevinBaconNCONST)
+//	a.NoError(err)
+//	a.Equal(2, len(chain.Links))
+//}
+
+func TestNodeEquality(t *testing.T) {
 	a := assert.New(t)
-	chain, err := doSearchNCONST(testDB, bruceWillisNCONST, kevinBaconNCONST)
-	a.NoError(err)
-	a.Equal(2, len(chain.Links))
+	n1 := NewNode(&Data{"foo"})
+	n2 := NewNode(&Data{"foo"})
+
+	a.True(n1.Equal(n2))
+	a.True(n2.Equal(n1))
+
+	n3 := NewNode(&Data{"bar"})
+	a.False(n1.Equal(n3))
+	a.False(n2.Equal(n3))
+	a.False(n3.Equal(n1))
+	a.False(n3.Equal(n2))
+}
+
+func TestBFS(t *testing.T) {
+	a := assert.New(t)
+	g := NewGraph(testDB)
+
+	start := g.GetNode(bruceWillisNCONST)
+	goal := g.GetNode(kevinBaconNCONST)
+	path := g.bfs(start, goal)
+	a.Equal(2, arrToLen(path))
 }
