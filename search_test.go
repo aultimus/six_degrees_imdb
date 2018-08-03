@@ -113,3 +113,17 @@ func BenchmarkAdj(b *testing.B) {
 		g.Adj(n)
 	}
 }
+
+// BenchmarkTCONSTForNCONST-4   	       1	3782539178 ns/op	   42032 B/op	     621 allocs/op
+func BenchmarkTCONSTForNCONST(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		testDB.tconstsForNCONST(bruceWillisNCONST)
+	}
+}
+
+// BenchmarkNCONSTForTCONST-4   	       1	3710530782 ns/op	   30752 B/op	     238 allocs/op
+func BenchmarkNCONSTForTCONST(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		testDB.tconstsForNCONST(dieHardTCONST)
+	}
+}
