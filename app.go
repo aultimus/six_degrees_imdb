@@ -84,6 +84,7 @@ func (a *App) Search(w http.ResponseWriter, r *http.Request) {
 // PathBetweenHandler ...
 // Usage: $ curl "http://localhost:8080/path_between?nconst+A=nm0000102&nconst+B=nm3636162"
 // {film1, film2, film3...}
+// Handler non-functioning/incomplete
 func (a *App) PathBetweenHandler(w http.ResponseWriter, r *http.Request) {
 	nconstA := strings.Join(r.Form[nconstPathA], "")
 	nconstB := strings.Join(r.Form[nconstPathB], "")
@@ -92,6 +93,7 @@ func (a *App) PathBetweenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // NameHandler handles disambiguation between textual names
+// Handler non-functioning/incomplete
 func (a *App) NameHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() //Parse url parameters passed, then parse the response packet for the POST body (request body)
 	actorA := strings.Join(r.Form[actorPathA], "")

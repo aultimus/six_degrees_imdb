@@ -104,3 +104,12 @@ func TestBFS(t *testing.T) {
 	path := g.bfs(start, goal)
 	a.Equal(2, arrToLen(path))
 }
+
+// BenchmarkAdj-4   	       1	3905898174 ns/op	  205320 B/op	    5765 allocs/op
+func BenchmarkAdj(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		g := NewGraph(testDB) //  will sql cache results for us?
+		n := g.GetNode(bruceWillisNCONST)
+		g.Adj(n)
+	}
+}

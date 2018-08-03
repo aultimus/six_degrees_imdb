@@ -374,6 +374,7 @@ func (db *DB) nconstsForTCONST(tconst string) ([]string, error) {
 // given an nconst find all tconst - table title_principals
 func (db *DB) tconstsForNCONST(nconst string) ([]string, error) {
 	var tconsts []string
+	// if we add title_type onto title_principals table then we can get away without doing a join which may be an optimisation
 	err := db.db.Select(&tconsts, "SELECT title_principals.tconst FROM title_principals INNER JOIN title_basics ON title_principals.tconst = title_basics.tconst WHERE nconst = $1 AND titletype = 'movie'", nconst)
 	return tconsts, err
 }
