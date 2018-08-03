@@ -198,7 +198,7 @@ func (g *Graph) bfs(start, goal *Node) []string {
 		}
 
 		// all neighbours of v
-		adj := g.Adj(v)
+		adj := g.Adj(v, goal)
 		fmt.Printf("node has %d adjacent nodes\n", len(adj))
 		for _, w := range adj {
 			if !w.visited {
@@ -210,7 +210,7 @@ func (g *Graph) bfs(start, goal *Node) []string {
 	return []string{}
 }
 
-func (g *Graph) Adj(n *Node) []*Node {
+func (g *Graph) Adj(n, goal *Node) []*Node {
 	var nodes []*Node
 
 	// Find all movies our actor is in
@@ -222,7 +222,7 @@ func (g *Graph) Adj(n *Node) []*Node {
 
 	// Find all actors that are in the same movies as our actor
 	for _, tconst := range tconsts {
-		nconsts, err := g.db.nconstsForTCONST(tconst)
+		nconsts, err := g.db.nconstsForTCONST(tconst, n.data.val)
 		if err != nil {
 			// should handle error more gracefully than this
 			panic(err.Error())
@@ -231,8 +231,11 @@ func (g *Graph) Adj(n *Node) []*Node {
 		// add each of our new nodes
 		for _, nconst := range nconsts {
 			n1 := g.GetNode(nconst)
-			e := &Edge{&Data{tconst}, n, n1}
+			e := &Edge{&Data{tconst}, n, nil}
 			n1.prev = e
+			if n1.Equal(goal) { // quick shortcut avoiding processing other nodes of same depth
+				return []*Node{n1}
+			}
 			nodes = append(nodes, n1)
 		}
 	}
@@ -288,11 +291,11 @@ type Node struct {
 //	n.next = new
 //}
 
-func (n *Node) AddEdge(n2 *Node, tconst string) {
-	e := &Edge{&Data{tconst}, n, n2}
-	//n.next = e
-	n.prev = e
-}
+//func (n *Node) AddEdge(n2 *Node, tconst string) {
+//	e := &Edge{&Data{tconst}, n, n2}
+//	//n.next = e
+//	n.prev = e
+//}
 
 //func (n *Node) AreAdjacent(w *Node) bool {
 //	if n.prev != nil {
@@ -365,9 +368,9 @@ func (db *DB) principalForNCONST(nconst string) (*Principal, error) {
 }
 
 // given a tconst find all nconst - table title_principals
-func (db *DB) nconstsForTCONST(tconst string) ([]string, error) {
+func (db *DB) nconstsForTCONST(tconst, excludeNCONST string) ([]string, error) {
 	var nconsts []string
-	err := db.db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1 AND (category='actor' OR category='actress')", tconst)
+	err := db.db.Select(&nconsts, "SELECT nconst FROM title_principals WHERE tconst = $1 AND (category='actor' OR category='actress') AND nconst != $2", tconst, excludeNCONST)
 	return nconsts, err
 }
 

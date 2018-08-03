@@ -15,6 +15,7 @@ const (
 	kevinBaconNCONST  = "nm0000102"
 	dieHardTCONST     = "tt0095016"
 	dieHardName       = "Die Hard"
+	alanRickmanNCONST = "nm0000614"
 )
 
 var testDB *DB
@@ -53,9 +54,10 @@ func TestPrincipalForNCONST(t *testing.T) {
 
 func TestNCONSTSForTCONST(t *testing.T) {
 	a := assert.New(t)
-	nconsts, err := testDB.nconstsForTCONST(dieHardTCONST)
+	nconsts, err := testDB.nconstsForTCONST(dieHardTCONST, alanRickmanNCONST)
 	a.NoError(err)
 	a.Contains(nconsts, bruceWillisNCONST)
+	a.NotContains(nconsts, alanRickmanNCONST)
 }
 
 func TestTCONSTSForNCONST(t *testing.T) {
@@ -105,12 +107,23 @@ func TestBFS(t *testing.T) {
 	a.Equal(2, arrToLen(path))
 }
 
+func TestGoalToArr(t *testing.T) {
+	a := assert.New(t)
+
+	n := NewNode(&Data{"ncat"})
+	n.prev = &Edge{&Data{"tbar"}, nil, nil}
+	n.prev.prev = NewNode(&Data{"nfoo"})
+
+	arr := goalToArr(n)
+	a.Equal([]string{"nfoo", "tbar", "ncat"}, arr)
+}
+
 // BenchmarkAdj-4   	       1	3905898174 ns/op	  205320 B/op	    5765 allocs/op
 func BenchmarkAdj(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		g := NewGraph(testDB) //  will sql cache results for us?
 		n := g.GetNode(bruceWillisNCONST)
-		g.Adj(n)
+		g.Adj(n, nil)
 	}
 }
 
