@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -27,12 +26,6 @@ type App struct {
 
 func NewApp() *App {
 	return &App{}
-}
-
-func connectDB() (*sqlx.DB, error) {
-	// by default go sql client seems to try to connect over tcp prompting a password
-	// so we need to use this brittle string
-	return sqlx.Open("postgres", "postgresql:///aulty?host=/var/run/postgresql")
 }
 
 func (a *App) Init() error {
